@@ -1,0 +1,84 @@
+﻿@{
+    ViewData["Title"] = "圖片文字擷取beta";
+}
+
+@*<div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    </div>*@
+
+<input type="radio" name="InputType" id="radio_url" value="url" onclick="handleClick(this);" checked><label for="radio_url">網址</label>
+<br>
+<input type="radio" name="InputType" id="radio_file" value="file" onclick="handleClick(this);"><label for="radio_file">檔案</label>
+<br>
+
+<form method="post" enctype="multipart/form-data" onsubmit="AJAXSubmit(this);return false;" action="/api/upload">
+
+    <div id="divurl" class="inputDiv" style="display:block">
+        網址 : <input type="text" name="url" style="width:1000px">
+        <br />
+    </div>
+
+    <div id="divfile" class="inputDiv" style="display:none">
+        <input type="file" name="files" onchange="loadFile(event)" />
+        <br />
+    </div>
+
+    <br />
+    <input type="submit" value="送出" />
+
+    <div style="margin-top:15px">
+        <output name="result"></output>
+    </div>
+</form>
+
+<img id="output" style="width:auto;" />
+<br />
+<textarea style="width:300px;height:auto;" id="textarea_result">
+　
+</textarea>
+
+<script>
+    async function AJAXSubmit(oFormElement) {
+        //var resultElement = oFormElement.elements.namedItem("result");
+        const formData = new FormData(oFormElement);
+
+        let radioValue = document.querySelector('input[name="InputType"]:checked').value;
+
+        try {
+            const response = await fetch(oFormElement.action + "/" + radioValue, {
+                method: 'POST',
+                body: formData
+            });
+
+            let jsonResult = await response.json();
+            //resultElement.value = 'Result: ' + response.status;
+
+            let result = jsonResult.data.map(x => x.recommandResult != undefined ? x.recommandResult : x.originResult).join('\n');
+
+            document.getElementById("textarea_result").innerHTML = result;
+
+            document.getElementById("textarea_result").style.height = document.getElementById("textarea_result").scrollHeight + 'px';
+
+            //show url img
+            if (radioValue == 'url') {
+                var image = document.getElementById('output');
+                image.src = formData.get('url');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function loadFile(event) {
+        var image = document.getElementById('output');
+        image.src = URL.createObjectURL(event.target.files[0]);
+    }
+
+    function handleClick(event) {
+        document.querySelectorAll('div[class="inputDiv"]').forEach(function (item) {
+            item.style = "display:none";
+        });
+        document.getElementById("div" + event.value).style = "display:block";
+    }
+</script>
